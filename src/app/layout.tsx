@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,10 +10,19 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "TEMTAS",
+    startupImage: "/icon-512.png",
   },
   icons: {
-    icon: "/icon-192.png",
-    apple: "/icon-192.png",
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
   },
 };
 
@@ -20,6 +30,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  userScalable: false,
   themeColor: "#a0845c",
 };
 
@@ -30,7 +41,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className="antialiased min-h-screen">{children}</body>
+      <body className="antialiased min-h-screen">
+        <ServiceWorkerRegister />
+        {children}
+      </body>
     </html>
   );
 }
