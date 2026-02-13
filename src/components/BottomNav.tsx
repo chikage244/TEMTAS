@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 export default function BottomNav() {
@@ -10,19 +11,22 @@ export default function BottomNav() {
     {
       href: "/tasks",
       label: "タスク",
-      icon: "\u2611",
+      icon: "/icon-task.png",
+      isImage: true,
       active: pathname === "/tasks",
     },
     {
       href: "/",
       label: "ホーム",
       icon: "\u2302",
+      isImage: false,
       active: pathname === "/",
     },
     {
       href: "/schedule",
       label: "予定",
-      icon: "\uD83D\uDCC5",
+      icon: "/icon-schedule.png",
+      isImage: true,
       active: pathname === "/schedule",
     },
   ];
@@ -40,9 +44,19 @@ export default function BottomNav() {
                 : "text-[#c4b89a] active:text-[#a0845c]"
             }`}
           >
-            <span className={`text-xl ${tab.active ? "scale-110" : ""}`}>
-              {tab.icon}
-            </span>
+            {tab.isImage ? (
+              <Image
+                src={tab.icon}
+                alt={tab.label}
+                width={24}
+                height={24}
+                className={`w-6 h-6 rounded-md ${tab.active ? "scale-110" : "opacity-60"} transition-all`}
+              />
+            ) : (
+              <span className={`text-xl ${tab.active ? "scale-110" : ""}`}>
+                {tab.icon}
+              </span>
+            )}
             <span
               className={`text-[10px] ${
                 tab.active ? "font-bold" : "font-medium"

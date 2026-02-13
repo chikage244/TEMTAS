@@ -30,8 +30,8 @@ export default function Home() {
           href="/tasks"
           className="group flex items-center gap-4 bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-[#e8dcc8] active:scale-[0.98] transition-all"
         >
-          <div className="w-12 h-12 bg-gradient-to-br from-[#c4a87a] to-[#a0845c] rounded-xl flex items-center justify-center text-white text-lg shadow-sm">
-            &#9745;
+          <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm">
+            <Image src="/icon-task.png" alt="タスク" width={48} height={48} className="w-full h-full object-cover" />
           </div>
           <div className="flex-1">
             <h2 className="font-bold text-[#3d2e1e]">タスク一覧</h2>
@@ -46,8 +46,8 @@ export default function Home() {
           href="/schedule"
           className="group flex items-center gap-4 bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-[#e8dcc8] active:scale-[0.98] transition-all"
         >
-          <div className="w-12 h-12 bg-gradient-to-br from-[#c28b6e] to-[#a07060] rounded-xl flex items-center justify-center text-white text-lg shadow-sm">
-            &#128197;
+          <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm">
+            <Image src="/icon-schedule.png" alt="スケジュール" width={48} height={48} className="w-full h-full object-cover" />
           </div>
           <div className="flex-1">
             <h2 className="font-bold text-[#3d2e1e]">スケジュール</h2>
