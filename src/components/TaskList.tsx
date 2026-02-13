@@ -30,12 +30,12 @@ function getTimeGroup(dateStr: string | null): string {
 const GROUP_ORDER = ["期限超過", "今日", "今週", "来週", "それ以降", "期限なし"];
 
 const GROUP_STYLES: Record<string, { badge: string; line: string }> = {
-  期限超過: { badge: "bg-red-50 text-red-500 border-red-200", line: "border-red-200" },
-  今日: { badge: "bg-amber-50 text-amber-600 border-amber-200", line: "border-amber-200" },
-  今週: { badge: "bg-green-50 text-green-600 border-green-200", line: "border-green-200" },
-  来週: { badge: "bg-teal-50 text-teal-600 border-teal-200", line: "border-teal-200" },
-  それ以降: { badge: "bg-gray-50 text-gray-500 border-gray-200", line: "border-gray-200" },
-  期限なし: { badge: "bg-gray-50 text-gray-400 border-gray-200", line: "border-gray-100" },
+  期限超過: { badge: "bg-red-50 text-red-400 border-red-200", line: "border-red-100" },
+  今日: { badge: "bg-amber-50 text-amber-600 border-amber-200", line: "border-amber-100" },
+  今週: { badge: "bg-[#f5ede0] text-[#8b6b3d] border-[#e0d0b8]", line: "border-[#e8dcc8]" },
+  来週: { badge: "bg-stone-50 text-stone-500 border-stone-200", line: "border-stone-100" },
+  それ以降: { badge: "bg-stone-50 text-stone-400 border-stone-200", line: "border-stone-100" },
+  期限なし: { badge: "bg-stone-50 text-stone-300 border-stone-200", line: "border-stone-100" },
 };
 
 function formatDate(dateStr: string | null): string {
@@ -119,8 +119,8 @@ export default function TaskList() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <div className="animate-spin h-8 w-8 border-[3px] border-green-400 border-t-transparent rounded-full" />
-        <p className="text-sm text-gray-400">読み込み中...</p>
+        <div className="animate-spin h-8 w-8 border-[3px] border-[#c4a87a] border-t-transparent rounded-full" />
+        <p className="text-sm text-[#c4b89a]">読み込み中...</p>
       </div>
     );
   }
@@ -134,7 +134,7 @@ export default function TaskList() {
             setLoading(true);
             fetchTasks();
           }}
-          className="bg-green-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold active:bg-green-600"
+          className="bg-[#a0845c] text-white px-5 py-2.5 rounded-xl text-sm font-semibold active:bg-[#8b7355]"
         >
           再読み込み
         </button>
@@ -149,7 +149,7 @@ export default function TaskList() {
         <select
           value={filterMember}
           onChange={(e) => setFilterMember(e.target.value as Member | "all")}
-          className="border border-green-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
+          className="border border-[#e0d0b8] rounded-xl px-3 py-2.5 text-sm bg-white/80 text-[#3d2e1e] focus:outline-none focus:ring-2 focus:ring-[#d4c4a8]"
         >
           <option value="all">全メンバー</option>
           {MEMBERS.map((m) => (
@@ -162,7 +162,7 @@ export default function TaskList() {
         <select
           value={filterProject}
           onChange={(e) => setFilterProject(e.target.value as Project | "all")}
-          className="border border-green-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
+          className="border border-[#e0d0b8] rounded-xl px-3 py-2.5 text-sm bg-white/80 text-[#3d2e1e] focus:outline-none focus:ring-2 focus:ring-[#d4c4a8]"
         >
           <option value="all">全プロジェクト</option>
           {PROJECTS.map((p) => (
@@ -176,8 +176,8 @@ export default function TaskList() {
           onClick={() => setHideCompleted(!hideCompleted)}
           className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
             hideCompleted
-              ? "bg-white text-gray-500 border border-gray-200"
-              : "bg-teal-50 text-teal-600 border border-teal-200"
+              ? "bg-white/80 text-[#a0845c] border border-[#e0d0b8]"
+              : "bg-amber-50 text-amber-700 border border-amber-200"
           }`}
         >
           {hideCompleted ? "完了を非表示" : "完了を表示中"}
@@ -185,15 +185,15 @@ export default function TaskList() {
       </div>
 
       {/* Task count */}
-      <p className="text-xs text-gray-400 mb-3">
+      <p className="text-[11px] text-[#c4b89a] mb-3">
         {filteredTasks.length}件のタスク
       </p>
 
       {/* Grouped tasks */}
       {grouped.length === 0 ? (
         <div className="text-center py-16">
-          <div className="text-4xl mb-3 opacity-30">&#9744;</div>
-          <p className="text-gray-400 text-sm">タスクがありません</p>
+          <div className="text-4xl mb-3 opacity-20">&#127807;</div>
+          <p className="text-[#c4b89a] text-sm">タスクがありません</p>
         </div>
       ) : (
         grouped.map((group) => {
@@ -202,12 +202,12 @@ export default function TaskList() {
             <div key={group.label} className="mb-6">
               <div className="flex items-center gap-2 mb-2">
                 <span
-                  className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${style.badge}`}
+                  className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${style.badge}`}
                 >
                   {group.label}
                 </span>
                 <div className={`flex-1 border-t ${style.line}`} />
-                <span className="text-[11px] text-gray-300">
+                <span className="text-[11px] text-[#d4c4a8]">
                   {group.tasks.length}
                 </span>
               </div>
@@ -215,40 +215,40 @@ export default function TaskList() {
                 {group.tasks.map((task) => (
                   <div
                     key={task.id}
-                    className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100/80 active:bg-gray-50 transition-all"
+                    className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-[#ece2d0] active:bg-[#faf5ec] transition-all"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-[15px] text-gray-800 leading-snug">
+                        <h4 className="font-bold text-[15px] text-[#3d2e1e] leading-snug">
                           {task.name}
                         </h4>
                         <div className="flex flex-wrap gap-1.5 mt-2">
                           <span
-                            className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
+                            className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                               MEMBER_COLORS[task.assignee] ||
-                              "bg-gray-50 text-gray-500"
+                              "bg-stone-50 text-stone-500"
                             }`}
                           >
                             {task.assignee}
                           </span>
                           {task.project && (
-                            <span className="text-[11px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] bg-[#f5ede0] text-[#8b7355] px-2 py-0.5 rounded-full">
                               {task.project}
                             </span>
                           )}
                           {task.category && (
-                            <span className="text-[11px] bg-gray-50 text-gray-400 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] bg-stone-50 text-stone-400 px-2 py-0.5 rounded-full">
                               {task.category}
                             </span>
                           )}
                         </div>
                         {task.dueDate && (
-                          <p className="text-[11px] text-gray-400 mt-1.5">
+                          <p className="text-[11px] text-[#c4b89a] mt-1.5">
                             {formatDate(task.dueDate)}
                           </p>
                         )}
                         {task.memo && (
-                          <p className="text-[11px] text-gray-400 mt-1 truncate">
+                          <p className="text-[11px] text-[#c4b89a] mt-1 truncate">
                             {task.memo}
                           </p>
                         )}

@@ -33,9 +33,9 @@ export const CATEGORIES: TaskCategory[] = [
 ];
 
 export const STATUS_COLORS: Record<TaskStatus, string> = {
-  未着手: "bg-gray-100 text-gray-600 border border-gray-200",
-  進行中: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-  完了: "bg-teal-50 text-teal-600 border border-teal-200",
+  未着手: "bg-stone-100 text-stone-500 border border-stone-200",
+  進行中: "bg-amber-50 text-amber-700 border border-amber-200",
+  完了: "bg-stone-50 text-stone-400 border border-stone-200 line-through",
 };
 
 export const STATUS_NEXT: Record<TaskStatus, TaskStatus> = {
@@ -44,10 +44,19 @@ export const STATUS_NEXT: Record<TaskStatus, TaskStatus> = {
   完了: "未着手",
 };
 
+// chikage=ライラック natashia=朱色 misa=水色 yuki=ペールイエロー yasuka=ライム
 export const MEMBER_COLORS: Record<Member, string> = {
-  chikage: "bg-pink-50 text-pink-600",
-  natashia: "bg-violet-50 text-violet-600",
-  misa: "bg-sky-50 text-sky-600",
-  yuki: "bg-amber-50 text-amber-600",
-  yasuka: "bg-lime-50 text-lime-600",
+  chikage: "bg-purple-50 text-purple-500 border border-purple-200",
+  natashia: "bg-red-50 text-red-500 border border-red-200",
+  misa: "bg-sky-50 text-sky-500 border border-sky-200",
+  yuki: "bg-yellow-50 text-yellow-600 border border-yellow-200",
+  yasuka: "bg-lime-50 text-lime-600 border border-lime-200",
+};
+
+export const MEMBER_DISPLAY: Record<Member, string> = {
+  chikage: "ちかげ",
+  natashia: "なたしあ",
+  misa: "みさ",
+  yuki: "ゆき",
+  yasuka: "やすか",
 };

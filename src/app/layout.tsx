@@ -10,13 +10,17 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "TEMTAS",
   },
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/icon-192.png",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#16a34a",
+  themeColor: "#a0845c",
 };
 
 export default function RootLayout({

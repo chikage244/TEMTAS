@@ -28,7 +28,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-green-100 z-30 safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-[#e8dcc8] z-30">
       <div className="flex items-center justify-around max-w-lg mx-auto h-16">
         {tabs.map((tab) => (
           <Link
@@ -36,22 +36,22 @@ export default function BottomNav() {
             href={tab.href}
             className={`flex flex-col items-center gap-0.5 px-6 py-2 rounded-xl transition-all ${
               tab.active
-                ? "text-green-600"
-                : "text-gray-400 active:text-gray-600"
+                ? "text-[#8b6b3d]"
+                : "text-[#c4b89a] active:text-[#a0845c]"
             }`}
           >
             <span className={`text-xl ${tab.active ? "scale-110" : ""}`}>
               {tab.icon}
             </span>
             <span
-              className={`text-[10px] font-medium ${
-                tab.active ? "font-bold" : ""
+              className={`text-[10px] ${
+                tab.active ? "font-bold" : "font-medium"
               }`}
             >
               {tab.label}
             </span>
             {tab.active && (
-              <div className="w-1 h-1 bg-green-500 rounded-full mt-0.5" />
+              <div className="w-1 h-1 bg-[#a0845c] rounded-full mt-0.5" />
             )}
           </Link>
         ))}
