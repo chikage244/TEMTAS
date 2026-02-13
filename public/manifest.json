@@ -4,8 +4,8 @@
   "description": "PTAメンバーのタスクとスケジュールを管理するアプリ",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#6366f1",
+  "background_color": "#f0fdf4",
+  "theme_color": "#16a34a",
   "icons": [
     {
       "src": "/icon-192.png",

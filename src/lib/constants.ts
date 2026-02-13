@@ -33,13 +33,21 @@ export const CATEGORIES: TaskCategory[] = [
 ];
 
 export const STATUS_COLORS: Record<TaskStatus, string> = {
-  未着手: "bg-gray-200 text-gray-700",
-  進行中: "bg-blue-100 text-blue-700",
-  完了: "bg-green-100 text-green-700",
+  未着手: "bg-gray-100 text-gray-600 border border-gray-200",
+  進行中: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  完了: "bg-teal-50 text-teal-600 border border-teal-200",
 };
 
 export const STATUS_NEXT: Record<TaskStatus, TaskStatus> = {
   未着手: "進行中",
   進行中: "完了",
   完了: "未着手",
+};
+
+export const MEMBER_COLORS: Record<Member, string> = {
+  chikage: "bg-pink-50 text-pink-600",
+  natashia: "bg-violet-50 text-violet-600",
+  misa: "bg-sky-50 text-sky-600",
+  yuki: "bg-amber-50 text-amber-600",
+  yasuka: "bg-lime-50 text-lime-600",
 };

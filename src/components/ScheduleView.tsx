@@ -24,6 +24,9 @@ export default function ScheduleView() {
   const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(
     null
   );
+  const [selectedDayEvents, setSelectedDayEvents] = useState<ScheduleEvent[]>(
+    []
+  );
 
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
@@ -88,16 +91,25 @@ export default function ScheduleView() {
     now.getDate()
   );
 
-  // Upcoming events (from today)
+  // Upcoming events
   const upcoming = events
     .filter((e) => e.date && e.date >= todayKey)
     .sort((a, b) => (a.date! > b.date! ? 1 : -1))
     .slice(0, 10);
 
+  const handleDayClick = (dayEvents: ScheduleEvent[]) => {
+    if (dayEvents.length === 1) {
+      setSelectedEvent(dayEvents[0]);
+    } else if (dayEvents.length > 1) {
+      setSelectedDayEvents(dayEvents);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="animate-spin h-8 w-8 border-4 border-amber-500 border-t-transparent rounded-full" />
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <div className="animate-spin h-8 w-8 border-[3px] border-teal-400 border-t-transparent rounded-full" />
+        <p className="text-sm text-gray-400">読み込み中...</p>
       </div>
     );
   }
@@ -105,13 +117,13 @@ export default function ScheduleView() {
   if (error) {
     return (
       <div className="text-center py-20">
-        <p className="text-red-500 mb-4">{error}</p>
+        <p className="text-red-400 mb-4 text-sm">{error}</p>
         <button
           onClick={() => {
             setLoading(true);
             fetchEvents();
           }}
-          className="bg-amber-500 text-white px-4 py-2 rounded-lg"
+          className="bg-teal-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold active:bg-teal-600"
         >
           再読み込み
         </button>
@@ -122,105 +134,156 @@ export default function ScheduleView() {
   return (
     <div>
       {/* Month navigation */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 bg-white rounded-2xl p-3 shadow-sm border border-gray-100/80">
         <button
           onClick={prevMonth}
-          className="p-2 text-xl rounded-lg active:bg-gray-100"
+          className="w-10 h-10 flex items-center justify-center text-lg rounded-xl active:bg-gray-100 text-gray-500"
         >
-          ◀
+          &#9664;
         </button>
         <div className="text-center">
-          <h2 className="text-lg font-bold">
+          <h2 className="text-base font-black text-gray-800">
             {viewYear}年{viewMonth + 1}月
           </h2>
           <button
             onClick={goToday}
-            className="text-xs text-amber-600 underline"
+            className="text-[10px] text-teal-500 font-medium"
           >
             今月に戻る
           </button>
         </div>
         <button
           onClick={nextMonth}
-          className="p-2 text-xl rounded-lg active:bg-gray-100"
+          className="w-10 h-10 flex items-center justify-center text-lg rounded-xl active:bg-gray-100 text-gray-500"
         >
-          ▶
+          &#9654;
         </button>
       </div>
 
       {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-0 mb-6">
-        {/* Weekday headers */}
-        {WEEKDAYS.map((wd, i) => (
-          <div
-            key={wd}
-            className={`text-center text-xs font-bold py-1 ${
-              i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-gray-400"
-            }`}
-          >
-            {wd}
-          </div>
-        ))}
-
-        {/* Empty cells for first week */}
-        {Array.from({ length: firstDay }).map((_, i) => (
-          <div key={`empty-${i}`} className="p-1" />
-        ))}
-
-        {/* Day cells */}
-        {Array.from({ length: daysInMonth }).map((_, i) => {
-          const day = i + 1;
-          const dateKey = formatDateKey(viewYear, viewMonth, day);
-          const dayEvents = eventsByDate[dateKey] || [];
-          const isToday = dateKey === todayKey;
-          const dayOfWeek = (firstDay + i) % 7;
-
-          return (
-            <button
-              key={day}
-              onClick={() => {
-                if (dayEvents.length > 0) {
-                  setSelectedEvent(dayEvents[0]);
-                }
-              }}
-              className={`p-1 min-h-[48px] border border-gray-50 rounded text-left relative ${
-                isToday ? "bg-amber-50 border-amber-300" : ""
-              } ${dayEvents.length > 0 ? "active:bg-gray-100" : ""}`}
+      <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100/80 mb-6">
+        <div className="grid grid-cols-7 gap-0">
+          {/* Weekday headers */}
+          {WEEKDAYS.map((wd, i) => (
+            <div
+              key={wd}
+              className={`text-center text-[10px] font-bold py-2 ${
+                i === 0
+                  ? "text-red-300"
+                  : i === 6
+                  ? "text-blue-300"
+                  : "text-gray-300"
+              }`}
             >
-              <span
-                className={`text-xs ${
-                  isToday
-                    ? "bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
-                    : dayOfWeek === 0
-                    ? "text-red-400"
-                    : dayOfWeek === 6
-                    ? "text-blue-400"
-                    : "text-gray-600"
-                }`}
+              {wd}
+            </div>
+          ))}
+
+          {/* Empty cells */}
+          {Array.from({ length: firstDay }).map((_, i) => (
+            <div key={`empty-${i}`} className="p-0.5" />
+          ))}
+
+          {/* Day cells */}
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const day = i + 1;
+            const dateKey = formatDateKey(viewYear, viewMonth, day);
+            const dayEvents = eventsByDate[dateKey] || [];
+            const isToday = dateKey === todayKey;
+            const dayOfWeek = (firstDay + i) % 7;
+            const hasEvents = dayEvents.length > 0;
+
+            return (
+              <button
+                key={day}
+                onClick={() => handleDayClick(dayEvents)}
+                disabled={!hasEvents}
+                className={`p-0.5 min-h-[52px] rounded-xl text-left relative transition-all ${
+                  isToday ? "bg-teal-50" : ""
+                } ${hasEvents ? "active:bg-green-50" : ""}`}
               >
-                {day}
-              </span>
-              {dayEvents.length > 0 && (
-                <div className="mt-0.5">
-                  {dayEvents.slice(0, 2).map((evt) => (
-                    <div
-                      key={evt.id}
-                      className="text-[9px] leading-tight text-amber-700 bg-amber-100 rounded px-0.5 mb-0.5 truncate"
-                    >
-                      {evt.name}
-                    </div>
-                  ))}
-                  {dayEvents.length > 2 && (
-                    <div className="text-[9px] text-gray-400">
-                      +{dayEvents.length - 2}
-                    </div>
-                  )}
-                </div>
-              )}
-            </button>
-          );
-        })}
+                <span
+                  className={`text-[11px] flex items-center justify-center w-6 h-6 mx-auto ${
+                    isToday
+                      ? "bg-teal-500 text-white rounded-full font-bold"
+                      : dayOfWeek === 0
+                      ? "text-red-400"
+                      : dayOfWeek === 6
+                      ? "text-blue-400"
+                      : "text-gray-600"
+                  }`}
+                >
+                  {day}
+                </span>
+                {hasEvents && (
+                  <div className="mt-0.5 px-0.5">
+                    {dayEvents.slice(0, 2).map((evt) => (
+                      <div
+                        key={evt.id}
+                        className="text-[8px] leading-tight text-teal-700 bg-teal-50 rounded px-0.5 mb-0.5 truncate"
+                      >
+                        {evt.name}
+                      </div>
+                    ))}
+                    {dayEvents.length > 2 && (
+                      <div className="text-[8px] text-gray-400 text-center">
+                        +{dayEvents.length - 2}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Day events list modal */}
+      {selectedDayEvents.length > 0 && (
+        <div
+          className="fixed inset-0 bg-black/30 z-20 flex items-end justify-center"
+          onClick={() => setSelectedDayEvents([])}
+        >
+          <div
+            className="bg-white rounded-t-3xl w-full max-w-lg p-6 pb-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
+            <h3 className="text-base font-black text-gray-800 mb-4">
+              {selectedDayEvents[0]?.date &&
+                new Date(selectedDayEvents[0].date).toLocaleDateString(
+                  "ja-JP",
+                  { month: "long", day: "numeric", weekday: "short" }
+                )}
+            </h3>
+            <div className="space-y-2">
+              {selectedDayEvents.map((evt) => (
+                <button
+                  key={evt.id}
+                  onClick={() => {
+                    setSelectedDayEvents([]);
+                    setSelectedEvent(evt);
+                  }}
+                  className="w-full text-left bg-teal-50 rounded-xl p-3 active:bg-teal-100"
+                >
+                  <h4 className="font-bold text-sm text-gray-800">
+                    {evt.name}
+                  </h4>
+                  {evt.time && (
+                    <p className="text-xs text-gray-400 mt-0.5">{evt.time}</p>
+                  )}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setSelectedDayEvents([])}
+              className="mt-5 w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-semibold text-sm"
+            >
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Event detail modal */}
       {selectedEvent && (
@@ -229,33 +292,62 @@ export default function ScheduleView() {
           onClick={() => setSelectedEvent(null)}
         >
           <div
-            className="bg-white rounded-t-2xl w-full max-w-lg p-6 pb-10"
+            className="bg-white rounded-t-3xl w-full max-w-lg p-6 pb-10"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
-            <h3 className="text-lg font-bold mb-2">{selectedEvent.name}</h3>
-            <div className="space-y-2 text-sm text-gray-600">
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
+            <h3 className="text-lg font-black text-gray-800 mb-3">
+              {selectedEvent.name}
+            </h3>
+            <div className="space-y-2.5 text-sm">
               {selectedEvent.date && (
-                <p>
-                  📅{" "}
-                  {new Date(selectedEvent.date).toLocaleDateString("ja-JP", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    weekday: "short",
-                  })}
-                </p>
+                <div className="flex items-center gap-3 text-gray-600">
+                  <div className="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center text-sm">
+                    &#128197;
+                  </div>
+                  <span>
+                    {new Date(selectedEvent.date).toLocaleDateString("ja-JP", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      weekday: "short",
+                    })}
+                  </span>
+                </div>
               )}
-              {selectedEvent.time && <p>🕐 {selectedEvent.time}</p>}
-              {selectedEvent.location && <p>📍 {selectedEvent.location}</p>}
-              {selectedEvent.project && <p>📁 {selectedEvent.project}</p>}
+              {selectedEvent.time && (
+                <div className="flex items-center gap-3 text-gray-600">
+                  <div className="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center text-sm">
+                    &#128336;
+                  </div>
+                  <span>{selectedEvent.time}</span>
+                </div>
+              )}
+              {selectedEvent.location && (
+                <div className="flex items-center gap-3 text-gray-600">
+                  <div className="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center text-sm">
+                    &#128205;
+                  </div>
+                  <span>{selectedEvent.location}</span>
+                </div>
+              )}
+              {selectedEvent.project && (
+                <div className="flex items-center gap-3 text-gray-600">
+                  <div className="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center text-sm">
+                    &#128193;
+                  </div>
+                  <span>{selectedEvent.project}</span>
+                </div>
+              )}
               {selectedEvent.memo && (
-                <p className="mt-2 text-gray-500">{selectedEvent.memo}</p>
+                <div className="mt-3 p-3 bg-gray-50 rounded-xl text-sm text-gray-500">
+                  {selectedEvent.memo}
+                </div>
               )}
             </div>
             <button
               onClick={() => setSelectedEvent(null)}
-              className="mt-6 w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-semibold"
+              className="mt-6 w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-semibold text-sm"
             >
               閉じる
             </button>
@@ -264,43 +356,59 @@ export default function ScheduleView() {
       )}
 
       {/* Upcoming events */}
-      <h3 className="text-sm font-bold text-gray-500 mb-2">
-        今後のイベント
-      </h3>
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-[11px] font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+          今後の予定
+        </span>
+        <div className="flex-1 border-t border-teal-100" />
+      </div>
       {upcoming.length === 0 ? (
-        <p className="text-center text-gray-400 py-6">
-          今後のイベントはありません
-        </p>
+        <div className="text-center py-10">
+          <div className="text-3xl mb-2 opacity-20">&#128197;</div>
+          <p className="text-gray-400 text-sm">今後のイベントはありません</p>
+        </div>
       ) : (
         <div className="space-y-2">
           {upcoming.map((evt) => (
             <button
               key={evt.id}
               onClick={() => setSelectedEvent(evt)}
-              className="w-full bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-left active:bg-gray-50"
+              className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100/80 text-left active:bg-gray-50 transition-all"
             >
               <div className="flex items-center gap-3">
-                <div className="bg-amber-100 text-amber-700 rounded-lg px-2 py-1 text-center min-w-[50px]">
-                  <div className="text-xs">
+                <div className="bg-gradient-to-br from-teal-50 to-green-50 border border-teal-100 rounded-xl px-2.5 py-1.5 text-center min-w-[52px]">
+                  <div className="text-[10px] text-teal-500 font-medium">
                     {evt.date
                       ? new Date(evt.date).toLocaleDateString("ja-JP", {
                           month: "short",
                         })
                       : ""}
                   </div>
-                  <div className="text-lg font-bold">
+                  <div className="text-lg font-black text-gray-800">
                     {evt.date ? new Date(evt.date).getDate() : "?"}
+                  </div>
+                  <div className="text-[9px] text-gray-400">
+                    {evt.date
+                      ? ["日", "月", "火", "水", "木", "金", "土"][
+                          new Date(evt.date).getDay()
+                        ]
+                      : ""}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold truncate">{evt.name}</h4>
+                  <h4 className="font-bold text-sm text-gray-800 truncate">
+                    {evt.name}
+                  </h4>
                   {evt.time && (
-                    <p className="text-xs text-gray-400">{evt.time}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                      {evt.time}
+                    </p>
                   )}
                   {evt.location && (
-                    <p className="text-xs text-gray-400">{evt.location}</p>
+                    <p className="text-[11px] text-gray-400">{evt.location}</p>
                   )}
                 </div>
+                <span className="text-gray-200 text-lg">&#8250;</span>
               </div>
             </button>
           ))}
