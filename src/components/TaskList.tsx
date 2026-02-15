@@ -401,7 +401,7 @@ export default function TaskList() {
       {/* Form modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/25 z-20 flex items-end justify-center" onClick={() => setShowForm(false)}>
-          <div className="bg-[#fdf8f0] rounded-t-3xl w-full max-w-lg p-6 pb-10 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#fdf8f0] rounded-t-3xl w-full max-w-lg p-6 pb-24 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="w-10 h-1 bg-[#d4c4a8] rounded-full mx-auto mb-5" />
             <h3 className="text-base font-black text-[#3d2e1e] mb-4">
               {editingTask ? "タスクを編集" : "新規タスク"}
