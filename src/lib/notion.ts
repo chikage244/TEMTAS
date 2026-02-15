@@ -100,3 +100,125 @@ export async function updateTaskStatus(
     },
   });
 }
+
+// Create a new task
+export async function createTask(data: {
+  name: string;
+  assignee: string;
+  dueDate: string | null;
+  status: string;
+  project: string;
+  category: string;
+  memo: string;
+}): Promise<void> {
+  await notion.pages.create({
+    parent: { database_id: TASK_DB_ID },
+    properties: {
+      タスク名: { title: [{ text: { content: data.name } }] },
+      担当者: { select: { name: data.assignee } },
+      ...(data.dueDate ? { 期限: { date: { start: data.dueDate } } } : {}),
+      ステータス: { select: { name: data.status } },
+      ...(data.project ? { プロジェクト: { select: { name: data.project } } } : {}),
+      ...(data.category ? { カテゴリ: { select: { name: data.category } } } : {}),
+      ...(data.memo ? { メモ: { rich_text: [{ text: { content: data.memo } }] } } : {}),
+    },
+  });
+}
+
+// Update a task
+export async function updateTask(
+  taskId: string,
+  data: {
+    name: string;
+    assignee: string;
+    dueDate: string | null;
+    status: string;
+    project: string;
+    category: string;
+    memo: string;
+  }
+): Promise<void> {
+  await notion.pages.update({
+    page_id: taskId,
+    properties: {
+      タスク名: { title: [{ text: { content: data.name } }] },
+      担当者: { select: { name: data.assignee } },
+      期限: data.dueDate ? { date: { start: data.dueDate } } : { date: null },
+      ステータス: { select: { name: data.status } },
+      ...(data.project ? { プロジェクト: { select: { name: data.project } } } : {}),
+      ...(data.category ? { カテゴリ: { select: { name: data.category } } } : {}),
+      メモ: data.memo
+        ? { rich_text: [{ text: { content: data.memo } }] }
+        : { rich_text: [] },
+    },
+  });
+}
+
+// Delete (archive) a task
+export async function deleteTask(taskId: string): Promise<void> {
+  await notion.pages.update({
+    page_id: taskId,
+    archived: true,
+  });
+}
+
+// Create a new schedule event
+export async function createScheduleEvent(data: {
+  name: string;
+  date: string | null;
+  time: string;
+  location: string;
+  project: string;
+  memo: string;
+}): Promise<void> {
+  await notion.pages.create({
+    parent: { database_id: SCHEDULE_DB_ID },
+    properties: {
+      イベント名: { title: [{ text: { content: data.name } }] },
+      ...(data.date ? { 日付: { date: { start: data.date } } } : {}),
+      ...(data.time ? { 時間: { rich_text: [{ text: { content: data.time } }] } } : {}),
+      ...(data.location ? { 場所: { rich_text: [{ text: { content: data.location } }] } } : {}),
+      ...(data.project ? { プロジェクト: { select: { name: data.project } } } : {}),
+      ...(data.memo ? { メモ: { rich_text: [{ text: { content: data.memo } }] } } : {}),
+    },
+  });
+}
+
+// Update a schedule event
+export async function updateScheduleEvent(
+  eventId: string,
+  data: {
+    name: string;
+    date: string | null;
+    time: string;
+    location: string;
+    project: string;
+    memo: string;
+  }
+): Promise<void> {
+  await notion.pages.update({
+    page_id: eventId,
+    properties: {
+      イベント名: { title: [{ text: { content: data.name } }] },
+      日付: data.date ? { date: { start: data.date } } : { date: null },
+      時間: data.time
+        ? { rich_text: [{ text: { content: data.time } }] }
+        : { rich_text: [] },
+      場所: data.location
+        ? { rich_text: [{ text: { content: data.location } }] }
+        : { rich_text: [] },
+      ...(data.project ? { プロジェクト: { select: { name: data.project } } } : {}),
+      メモ: data.memo
+        ? { rich_text: [{ text: { content: data.memo } }] }
+        : { rich_text: [] },
+    },
+  });
+}
+
+// Delete (archive) a schedule event
+export async function deleteScheduleEvent(eventId: string): Promise<void> {
+  await notion.pages.update({
+    page_id: eventId,
+    archived: true,
+  });
+}

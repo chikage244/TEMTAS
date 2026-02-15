@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ScheduleEvent } from "@/types";
+import { ScheduleEvent, Project } from "@/types";
+import { PROJECTS } from "@/lib/constants";
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
@@ -17,6 +18,24 @@ function formatDateKey(year: number, month: number, day: number): string {
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
+interface EventFormData {
+  name: string;
+  date: string;
+  time: string;
+  location: string;
+  project: Project;
+  memo: string;
+}
+
+const EMPTY_FORM: EventFormData = {
+  name: "",
+  date: "",
+  time: "",
+  location: "",
+  project: "その他",
+  memo: "",
+};
+
 export default function ScheduleView() {
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,9 +47,18 @@ export default function ScheduleView() {
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
 
+  const [showForm, setShowForm] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
+  const [formData, setFormData] = useState<EventFormData>(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
   const fetchEvents = useCallback(async () => {
     try {
-      const res = await fetch("/api/schedule");
+      const res = await fetch("/api/schedule", {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
       if (!res.ok) throw new Error("取得失敗");
       const data = await res.json();
       setEvents(data);
@@ -44,6 +72,16 @@ export default function ScheduleView() {
 
   useEffect(() => {
     fetchEvents();
+  }, [fetchEvents]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        fetchEvents();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [fetchEvents]);
 
   const prevMonth = () => {
@@ -84,6 +122,81 @@ export default function ScheduleView() {
     else if (dayEvents.length > 1) setSelectedDayEvents(dayEvents);
   };
 
+  const openNewForm = () => {
+    setEditingEvent(null);
+    setFormData(EMPTY_FORM);
+    setSelectedEvent(null);
+    setShowForm(true);
+  };
+
+  const openEditForm = (evt: ScheduleEvent) => {
+    setEditingEvent(evt);
+    setFormData({
+      name: evt.name,
+      date: evt.date ?? "",
+      time: evt.time,
+      location: evt.location,
+      project: evt.project,
+      memo: evt.memo,
+    });
+    setSelectedEvent(null);
+    setSelectedDayEvents([]);
+    setShowForm(true);
+  };
+
+  const handleSave = async () => {
+    if (!formData.name.trim()) return;
+    setSaving(true);
+    try {
+      if (editingEvent) {
+        const res = await fetch("/api/schedule", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            eventId: editingEvent.id,
+            ...formData,
+            date: formData.date || null,
+          }),
+        });
+        if (!res.ok) throw new Error();
+      } else {
+        const res = await fetch("/api/schedule", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...formData,
+            date: formData.date || null,
+          }),
+        });
+        if (!res.ok) throw new Error();
+      }
+      setShowForm(false);
+      setEditingEvent(null);
+      await fetchEvents();
+    } catch {
+      alert("保存に失敗しました");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (eventId: string) => {
+    try {
+      const res = await fetch("/api/schedule", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId }),
+      });
+      if (!res.ok) throw new Error();
+      setConfirmDelete(null);
+      setShowForm(false);
+      setEditingEvent(null);
+      await fetchEvents();
+    } catch {
+      alert("削除に失敗しました");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -106,6 +219,9 @@ export default function ScheduleView() {
       </div>
     );
   }
+
+  const selectClass = "w-full border border-[#e0d0b8] rounded-xl px-3 py-2.5 text-sm bg-white/80 text-[#3d2e1e] focus:outline-none focus:ring-2 focus:ring-[#d4c4a8]";
+  const inputClass = selectClass;
 
   return (
     <div>
@@ -249,19 +365,35 @@ export default function ScheduleView() {
                 <div className="mt-3 p-3 bg-white/60 rounded-xl text-sm text-[#8b7355]">{selectedEvent.memo}</div>
               )}
             </div>
-            <button onClick={() => setSelectedEvent(null)} className="mt-6 w-full bg-[#f5ede0] text-[#8b7355] py-3 rounded-xl font-semibold text-sm">
-              閉じる
-            </button>
+            <div className="mt-5 space-y-2">
+              <button
+                onClick={() => openEditForm(selectedEvent)}
+                className="w-full bg-[#a0845c] text-white py-3 rounded-xl font-semibold text-sm active:bg-[#8b7355]"
+              >
+                編集
+              </button>
+              <button onClick={() => setSelectedEvent(null)} className="w-full bg-[#f5ede0] text-[#8b7355] py-3 rounded-xl font-semibold text-sm">
+                閉じる
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Upcoming events */}
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-[11px] font-bold text-[#8b6b3d] bg-[#f5ede0] px-2.5 py-0.5 rounded-full border border-[#e0d0b8]">
-          今後の予定
-        </span>
-        <div className="flex-1 border-t border-[#e8dcc8]" />
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-bold text-[#8b6b3d] bg-[#f5ede0] px-2.5 py-0.5 rounded-full border border-[#e0d0b8]">
+            今後の予定
+          </span>
+          <div className="flex-1 border-t border-[#e8dcc8]" />
+        </div>
+        <button
+          onClick={openNewForm}
+          className="bg-[#a0845c] text-white px-4 py-2 rounded-xl text-xs font-bold active:bg-[#8b7355] transition-all"
+        >
+          + 新規予定
+        </button>
       </div>
       {upcoming.length === 0 ? (
         <div className="text-center py-10">
@@ -297,6 +429,131 @@ export default function ScheduleView() {
               </div>
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Form modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/25 z-20 flex items-end justify-center" onClick={() => setShowForm(false)}>
+          <div className="bg-[#fdf8f0] rounded-t-3xl w-full max-w-lg p-6 pb-10 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-[#d4c4a8] rounded-full mx-auto mb-5" />
+            <h3 className="text-base font-black text-[#3d2e1e] mb-4">
+              {editingEvent ? "予定を編集" : "新規予定"}
+            </h3>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">イベント名 *</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className={inputClass}
+                  placeholder="イベント名を入力"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">日付</label>
+                <input
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">時間</label>
+                  <input
+                    type="text"
+                    value={formData.time}
+                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                    className={inputClass}
+                    placeholder="例: 10:00〜12:00"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">場所</label>
+                  <input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    className={inputClass}
+                    placeholder="場所を入力"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">プロジェクト</label>
+                <select
+                  value={formData.project}
+                  onChange={(e) => setFormData({ ...formData, project: e.target.value as Project })}
+                  className={selectClass}
+                >
+                  {PROJECTS.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">メモ</label>
+                <textarea
+                  value={formData.memo}
+                  onChange={(e) => setFormData({ ...formData, memo: e.target.value })}
+                  className={`${inputClass} resize-none`}
+                  rows={3}
+                  placeholder="メモを入力"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-2">
+              <button
+                onClick={handleSave}
+                disabled={saving || !formData.name.trim()}
+                className="w-full bg-[#a0845c] text-white py-3 rounded-xl font-semibold text-sm active:bg-[#8b7355] disabled:opacity-50 transition-all"
+              >
+                {saving ? "保存中..." : editingEvent ? "保存" : "作成"}
+              </button>
+
+              {editingEvent && (
+                confirmDelete === editingEvent.id ? (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleDelete(editingEvent.id)}
+                      className="flex-1 bg-red-500 text-white py-3 rounded-xl font-semibold text-sm"
+                    >
+                      本当に削除
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(null)}
+                      className="flex-1 bg-[#f5ede0] text-[#8b7355] py-3 rounded-xl font-semibold text-sm"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmDelete(editingEvent.id)}
+                    className="w-full bg-red-50 text-red-400 py-3 rounded-xl font-semibold text-sm border border-red-200"
+                  >
+                    削除
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() => setShowForm(false)}
+                className="w-full bg-[#f5ede0] text-[#8b7355] py-3 rounded-xl font-semibold text-sm"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

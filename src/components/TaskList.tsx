@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Task, TaskStatus, Member, Project } from "@/types";
+import { Task, TaskStatus, Member, Project, TaskCategory } from "@/types";
 import {
   MEMBERS,
   PROJECTS,
+  STATUSES,
+  CATEGORIES,
   STATUS_COLORS,
   STATUS_NEXT,
   MEMBER_COLORS,
+  MEMBER_DISPLAY,
 } from "@/lib/constants";
 
 function getTimeGroup(dateStr: string | null): string {
@@ -47,6 +50,26 @@ function formatDate(dateStr: string | null): string {
   return `${month}/${day}(${weekday})`;
 }
 
+interface TaskFormData {
+  name: string;
+  assignee: Member;
+  dueDate: string;
+  status: TaskStatus;
+  project: Project;
+  category: TaskCategory;
+  memo: string;
+}
+
+const EMPTY_FORM: TaskFormData = {
+  name: "",
+  assignee: "chikage",
+  dueDate: "",
+  status: "未着手",
+  project: "その他",
+  category: "その他",
+  memo: "",
+};
+
 export default function TaskList() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,9 +78,18 @@ export default function TaskList() {
   const [filterProject, setFilterProject] = useState<Project | "all">("all");
   const [hideCompleted, setHideCompleted] = useState(true);
 
+  const [showForm, setShowForm] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [formData, setFormData] = useState<TaskFormData>(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
   const fetchTasks = useCallback(async () => {
     try {
-      const res = await fetch("/api/tasks");
+      const res = await fetch("/api/tasks", {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
       if (!res.ok) throw new Error("取得失敗");
       const data = await res.json();
       setTasks(data);
@@ -71,6 +103,16 @@ export default function TaskList() {
 
   useEffect(() => {
     fetchTasks();
+  }, [fetchTasks]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        fetchTasks();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [fetchTasks]);
 
   const handleStatusChange = async (task: Task) => {
@@ -93,6 +135,79 @@ export default function TaskList() {
           t.id === task.id ? { ...t, status: task.status } : t
         )
       );
+    }
+  };
+
+  const openNewForm = () => {
+    setEditingTask(null);
+    setFormData(EMPTY_FORM);
+    setShowForm(true);
+  };
+
+  const openEditForm = (task: Task) => {
+    setEditingTask(task);
+    setFormData({
+      name: task.name,
+      assignee: task.assignee,
+      dueDate: task.dueDate ?? "",
+      status: task.status,
+      project: task.project,
+      category: task.category,
+      memo: task.memo,
+    });
+    setShowForm(true);
+  };
+
+  const handleSave = async () => {
+    if (!formData.name.trim()) return;
+    setSaving(true);
+    try {
+      if (editingTask) {
+        const res = await fetch("/api/tasks", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            taskId: editingTask.id,
+            ...formData,
+            dueDate: formData.dueDate || null,
+          }),
+        });
+        if (!res.ok) throw new Error();
+      } else {
+        const res = await fetch("/api/tasks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...formData,
+            dueDate: formData.dueDate || null,
+          }),
+        });
+        if (!res.ok) throw new Error();
+      }
+      setShowForm(false);
+      setEditingTask(null);
+      await fetchTasks();
+    } catch {
+      alert("保存に失敗しました");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (taskId: string) => {
+    try {
+      const res = await fetch("/api/tasks", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId }),
+      });
+      if (!res.ok) throw new Error();
+      setConfirmDelete(null);
+      setShowForm(false);
+      setEditingTask(null);
+      await fetchTasks();
+    } catch {
+      alert("削除に失敗しました");
     }
   };
 
@@ -142,6 +257,9 @@ export default function TaskList() {
     );
   }
 
+  const selectClass = "w-full border border-[#e0d0b8] rounded-xl px-3 py-2.5 text-sm bg-white/80 text-[#3d2e1e] focus:outline-none focus:ring-2 focus:ring-[#d4c4a8]";
+  const inputClass = selectClass;
+
   return (
     <div>
       {/* Filters */}
@@ -154,7 +272,7 @@ export default function TaskList() {
           <option value="all">全メンバー</option>
           {MEMBERS.map((m) => (
             <option key={m} value={m}>
-              {m}
+              {MEMBER_DISPLAY[m]}
             </option>
           ))}
         </select>
@@ -184,10 +302,18 @@ export default function TaskList() {
         </button>
       </div>
 
-      {/* Task count */}
-      <p className="text-[11px] text-[#c4b89a] mb-3">
-        {filteredTasks.length}件のタスク
-      </p>
+      {/* Task count + add button */}
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[11px] text-[#c4b89a]">
+          {filteredTasks.length}件のタスク
+        </p>
+        <button
+          onClick={openNewForm}
+          className="bg-[#a0845c] text-white px-4 py-2 rounded-xl text-xs font-bold active:bg-[#8b7355] transition-all"
+        >
+          + 新規タスク
+        </button>
+      </div>
 
       {/* Grouped tasks */}
       {grouped.length === 0 ? (
@@ -215,7 +341,8 @@ export default function TaskList() {
                 {group.tasks.map((task) => (
                   <div
                     key={task.id}
-                    className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-[#ece2d0] active:bg-[#faf5ec] transition-all"
+                    onClick={() => openEditForm(task)}
+                    className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-[#ece2d0] active:bg-[#faf5ec] transition-all cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
@@ -229,7 +356,7 @@ export default function TaskList() {
                               "bg-stone-50 text-stone-500"
                             }`}
                           >
-                            {task.assignee}
+                            {MEMBER_DISPLAY[task.assignee] || task.assignee}
                           </span>
                           {task.project && (
                             <span className="text-[10px] bg-[#f5ede0] text-[#8b7355] px-2 py-0.5 rounded-full">
@@ -254,7 +381,10 @@ export default function TaskList() {
                         )}
                       </div>
                       <button
-                        onClick={() => handleStatusChange(task)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStatusChange(task);
+                        }}
                         className={`px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all active:scale-95 ${STATUS_COLORS[task.status]}`}
                       >
                         {task.status}
@@ -266,6 +396,149 @@ export default function TaskList() {
             </div>
           );
         })
+      )}
+
+      {/* Form modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/25 z-20 flex items-end justify-center" onClick={() => setShowForm(false)}>
+          <div className="bg-[#fdf8f0] rounded-t-3xl w-full max-w-lg p-6 pb-10 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-[#d4c4a8] rounded-full mx-auto mb-5" />
+            <h3 className="text-base font-black text-[#3d2e1e] mb-4">
+              {editingTask ? "タスクを編集" : "新規タスク"}
+            </h3>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">タスク名 *</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className={inputClass}
+                  placeholder="タスク名を入力"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">担当者</label>
+                  <select
+                    value={formData.assignee}
+                    onChange={(e) => setFormData({ ...formData, assignee: e.target.value as Member })}
+                    className={selectClass}
+                  >
+                    {MEMBERS.map((m) => (
+                      <option key={m} value={m}>{MEMBER_DISPLAY[m]}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">ステータス</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskStatus })}
+                    className={selectClass}
+                  >
+                    {STATUSES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">期限</label>
+                <input
+                  type="date"
+                  value={formData.dueDate}
+                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">プロジェクト</label>
+                  <select
+                    value={formData.project}
+                    onChange={(e) => setFormData({ ...formData, project: e.target.value as Project })}
+                    className={selectClass}
+                  >
+                    {PROJECTS.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">カテゴリ</label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value as TaskCategory })}
+                    className={selectClass}
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">メモ</label>
+                <textarea
+                  value={formData.memo}
+                  onChange={(e) => setFormData({ ...formData, memo: e.target.value })}
+                  className={`${inputClass} resize-none`}
+                  rows={3}
+                  placeholder="メモを入力"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-2">
+              <button
+                onClick={handleSave}
+                disabled={saving || !formData.name.trim()}
+                className="w-full bg-[#a0845c] text-white py-3 rounded-xl font-semibold text-sm active:bg-[#8b7355] disabled:opacity-50 transition-all"
+              >
+                {saving ? "保存中..." : editingTask ? "保存" : "作成"}
+              </button>
+
+              {editingTask && (
+                confirmDelete === editingTask.id ? (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleDelete(editingTask.id)}
+                      className="flex-1 bg-red-500 text-white py-3 rounded-xl font-semibold text-sm"
+                    >
+                      本当に削除
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(null)}
+                      className="flex-1 bg-[#f5ede0] text-[#8b7355] py-3 rounded-xl font-semibold text-sm"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmDelete(editingTask.id)}
+                    className="w-full bg-red-50 text-red-400 py-3 rounded-xl font-semibold text-sm border border-red-200"
+                  >
+                    削除
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() => setShowForm(false)}
+                className="w-full bg-[#f5ede0] text-[#8b7355] py-3 rounded-xl font-semibold text-sm"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

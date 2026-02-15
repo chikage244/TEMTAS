@@ -23,10 +23,16 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // API calls: always network first
+  // API calls: network first, update cache on success, fallback to cache
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(
-      fetch(request).catch(() => caches.match(request))
+      fetch(request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }
