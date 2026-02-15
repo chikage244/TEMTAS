@@ -117,9 +117,16 @@ export default function ScheduleView() {
     .sort((a, b) => (a.date! > b.date! ? 1 : -1))
     .slice(0, 10);
 
-  const handleDayClick = (dayEvents: ScheduleEvent[]) => {
-    if (dayEvents.length === 1) setSelectedEvent(dayEvents[0]);
-    else if (dayEvents.length > 1) setSelectedDayEvents(dayEvents);
+  const handleDayClick = (dayEvents: ScheduleEvent[], dateKey: string) => {
+    if (dayEvents.length === 0) {
+      setEditingEvent(null);
+      setFormData({ ...EMPTY_FORM, date: dateKey });
+      setShowForm(true);
+    } else if (dayEvents.length === 1) {
+      setSelectedEvent(dayEvents[0]);
+    } else {
+      setSelectedDayEvents(dayEvents);
+    }
   };
 
   const openNewForm = () => {
@@ -269,11 +276,10 @@ export default function ScheduleView() {
             return (
               <button
                 key={day}
-                onClick={() => handleDayClick(dayEvents)}
-                disabled={!hasEvents}
-                className={`p-0.5 min-h-[52px] rounded-xl text-left relative transition-all ${
+                onClick={() => handleDayClick(dayEvents, dateKey)}
+                className={`p-0.5 min-h-[52px] rounded-xl text-left relative transition-all active:bg-[#faf5ec] ${
                   isToday ? "bg-[#f5ede0]" : ""
-                } ${hasEvents ? "active:bg-[#faf5ec]" : ""}`}
+                }`}
               >
                 <span className={`text-[11px] flex items-center justify-center w-6 h-6 mx-auto ${
                   isToday
@@ -309,7 +315,7 @@ export default function ScheduleView() {
       {/* Day events list modal */}
       {selectedDayEvents.length > 0 && (
         <div className="fixed inset-0 bg-black/25 z-20 flex items-end justify-center" onClick={() => setSelectedDayEvents([])}>
-          <div className="bg-[#fdf8f0] rounded-t-3xl w-full max-w-lg p-6 pb-10" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#fdf8f0] rounded-t-3xl w-full max-w-lg p-6 pb-24" onClick={(e) => e.stopPropagation()}>
             <div className="w-10 h-1 bg-[#d4c4a8] rounded-full mx-auto mb-5" />
             <h3 className="text-base font-black text-[#3d2e1e] mb-4">
               {selectedDayEvents[0]?.date && new Date(selectedDayEvents[0].date).toLocaleDateString("ja-JP", { month: "long", day: "numeric", weekday: "short" })}
@@ -333,7 +339,7 @@ export default function ScheduleView() {
       {/* Event detail modal */}
       {selectedEvent && (
         <div className="fixed inset-0 bg-black/25 z-20 flex items-end justify-center" onClick={() => setSelectedEvent(null)}>
-          <div className="bg-[#fdf8f0] rounded-t-3xl w-full max-w-lg p-6 pb-10" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#fdf8f0] rounded-t-3xl w-full max-w-lg p-6 pb-24" onClick={(e) => e.stopPropagation()}>
             <div className="w-10 h-1 bg-[#d4c4a8] rounded-full mx-auto mb-5" />
             <h3 className="text-lg font-black text-[#3d2e1e] mb-3">{selectedEvent.name}</h3>
             <div className="space-y-2.5 text-sm">
