@@ -54,9 +54,9 @@ export const MEMBER_COLORS: Record<Member, string> = {
 };
 
 export const MEMBER_DISPLAY: Record<Member, string> = {
-  chikage: "ちかげ",
-  natashia: "なたしあ",
-  misa: "みさ",
-  yuki: "ゆき",
-  yasuka: "やすか",
+  chikage: "chikage",
+  natashia: "natashia",
+  misa: "misa",
+  yuki: "yuki",
+  yasuka: "yasuka",
 };
