@@ -12,6 +12,11 @@ import {
   MEMBER_COLORS,
   MEMBER_DISPLAY,
 } from "@/lib/constants";
+import EmailTemplateModal from "./EmailTemplateModal";
+
+function isEmailTask(task: Task): boolean {
+  return task.name.startsWith("メール作成:");
+}
 
 function getTimeGroup(dateStr: string | null): string {
   if (!dateStr) return "期限なし";
@@ -83,6 +88,7 @@ export default function TaskList() {
   const [formData, setFormData] = useState<TaskFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [emailTemplateTask, setEmailTemplateTask] = useState<Task | null>(null);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -341,7 +347,7 @@ export default function TaskList() {
                 {group.tasks.map((task) => (
                   <div
                     key={task.id}
-                    onClick={() => openEditForm(task)}
+                    onClick={() => isEmailTask(task) ? setEmailTemplateTask(task) : openEditForm(task)}
                     className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-[#ece2d0] active:bg-[#faf5ec] transition-all cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -366,6 +372,11 @@ export default function TaskList() {
                           {task.category && (
                             <span className="text-[10px] bg-stone-50 text-stone-400 px-2 py-0.5 rounded-full">
                               {task.category}
+                            </span>
+                          )}
+                          {isEmailTask(task) && (
+                            <span className="text-[10px] bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full border border-blue-100">
+                              &#9993; テンプレ
                             </span>
                           )}
                         </div>
@@ -539,6 +550,18 @@ export default function TaskList() {
             </div>
           </div>
         </div>
+      )}
+      {/* Email template modal */}
+      {emailTemplateTask && (
+        <EmailTemplateModal
+          task={emailTemplateTask}
+          onClose={() => setEmailTemplateTask(null)}
+          onEdit={() => {
+            const task = emailTemplateTask;
+            setEmailTemplateTask(null);
+            openEditForm(task);
+          }}
+        />
       )}
     </div>
   );

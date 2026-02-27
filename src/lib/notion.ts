@@ -222,3 +222,31 @@ export async function deleteScheduleEvent(eventId: string): Promise<void> {
     archived: true,
   });
 }
+
+// Fetch page body content (blocks) as plain text
+export async function getPageContent(pageId: string): Promise<string> {
+  const textParts: string[] = [];
+  let cursor: string | undefined = undefined;
+
+  do {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const response: any = await notion.blocks.children.list({
+      block_id: pageId,
+      page_size: 100,
+      ...(cursor ? { start_cursor: cursor } : {}),
+    });
+
+    for (const block of response.results) {
+      if (block.type === "paragraph" && block.paragraph?.rich_text) {
+        const text = block.paragraph.rich_text
+          .map((rt: { plain_text: string }) => rt.plain_text)
+          .join("");
+        textParts.push(text);
+      }
+    }
+
+    cursor = response.has_more ? response.next_cursor : undefined;
+  } while (cursor);
+
+  return textParts.join("\n");
+}
