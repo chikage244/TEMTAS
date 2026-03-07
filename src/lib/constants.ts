@@ -18,6 +18,10 @@ export const PROJECTS: Project[] = [
   "平日除草",
   "給食試食会",
   "秋イベント",
+  "子ども110番",
+  "書記",
+  "会計",
+  "地区",
   "その他",
 ];
 
@@ -44,13 +48,28 @@ export const STATUS_NEXT: Record<TaskStatus, TaskStatus> = {
   完了: "未着手",
 };
 
-// chikage=ライラック natashia=朱色 misa=水色 yuki=ペールイエロー yasuka=ライム
-export const MEMBER_COLORS: Record<Member, string> = {
-  chikage: "bg-purple-50 text-purple-500 border border-purple-200",
-  natashia: "bg-red-50 text-red-500 border border-red-200",
-  misa: "bg-sky-50 text-sky-500 border border-sky-200",
-  yuki: "bg-yellow-50 text-yellow-600 border border-yellow-200",
-  yasuka: "bg-lime-50 text-lime-600 border border-lime-200",
+export const MEMBER_COLORS: Record<Member, { bg: string; text: string }> = {
+  chikage:  { bg: "#C9D0EA", text: "#5B6BA8" },
+  natashia: { bg: "#EABABC", text: "#A83A3A" },
+  misa:     { bg: "#BCDAED", text: "#4A7FA0" },
+  yuki:     { bg: "#E8E698", text: "#797400" },
+  yasuka:   { bg: "#C5E5D3", text: "#2E6647" },
+};
+
+export const PROJECT_ASSIGNEES: Partial<Record<Project, Member[]>> = {
+  運動会:     ["misa"],
+  校内清掃:   ["misa", "yuki"],
+  ベルマーク: ["natashia", "yasuka"],
+  土曜除草:   ["chikage"],
+  読み聞かせ: ["chikage"],
+  園芸:       ["yasuka"],
+  平日除草:   ["yasuka"],
+  給食試食会: ["chikage", "yuki"],
+  秋イベント: ["yuki", "chikage"],
+  子ども110番: ["natashia"],
+  書記:       ["chikage"],
+  会計:       ["yuki", "yasuka"],
+  地区:       ["misa", "natashia"],
 };
 
 export const MEMBER_DISPLAY: Record<Member, string> = {

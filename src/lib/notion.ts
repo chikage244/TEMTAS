@@ -20,6 +20,17 @@ function getSelect(props: PageProperties, name: string): string {
   return props[name]?.select?.name ?? "";
 }
 
+function getMultiSelect(props: PageProperties, name: string): string[] {
+  const prop = props[name];
+  if (prop?.multi_select) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return prop.multi_select.map((item: any) => item.name).filter(Boolean);
+  }
+  // select→multi_select移行時のフォールバック
+  const selectName = prop?.select?.name;
+  return selectName ? [selectName] : [];
+}
+
 function getDate(props: PageProperties, name: string): string | null {
   return props[name]?.date?.start ?? null;
 }
@@ -53,7 +64,7 @@ export async function getTasks(): Promise<Task[]> {
     return {
       id: page.id,
       name: getTitle(props),
-      assignee: getSelect(props, "担当者") as Task["assignee"],
+      assignee: getMultiSelect(props, "担当者") as Task["assignee"],
       dueDate: getDate(props, "期限"),
       status: getSelect(props, "ステータス") as TaskStatus,
       project: getSelect(props, "プロジェクト") as Task["project"],
@@ -104,7 +115,7 @@ export async function updateTaskStatus(
 // Create a new task
 export async function createTask(data: {
   name: string;
-  assignee: string;
+  assignee: string[];
   dueDate: string | null;
   status: string;
   project: string;
@@ -115,7 +126,7 @@ export async function createTask(data: {
     parent: { database_id: TASK_DB_ID },
     properties: {
       タスク名: { title: [{ text: { content: data.name } }] },
-      担当者: { select: { name: data.assignee } },
+      担当者: { multi_select: data.assignee.map((name) => ({ name })) },
       ...(data.dueDate ? { 期限: { date: { start: data.dueDate } } } : {}),
       ステータス: { select: { name: data.status } },
       ...(data.project ? { プロジェクト: { select: { name: data.project } } } : {}),
@@ -130,7 +141,7 @@ export async function updateTask(
   taskId: string,
   data: {
     name: string;
-    assignee: string;
+    assignee: string[];
     dueDate: string | null;
     status: string;
     project: string;
@@ -142,7 +153,7 @@ export async function updateTask(
     page_id: taskId,
     properties: {
       タスク名: { title: [{ text: { content: data.name } }] },
-      担当者: { select: { name: data.assignee } },
+      担当者: { multi_select: data.assignee.map((name) => ({ name })) },
       期限: data.dueDate ? { date: { start: data.dueDate } } : { date: null },
       ステータス: { select: { name: data.status } },
       ...(data.project ? { プロジェクト: { select: { name: data.project } } } : {}),
