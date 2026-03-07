@@ -21,8 +21,14 @@ function getSelect(props: PageProperties, name: string): string {
 }
 
 function getMultiSelect(props: PageProperties, name: string): string[] {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (props[name]?.multi_select ?? []).map((item: any) => item.name);
+  const prop = props[name];
+  if (prop?.multi_select) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return prop.multi_select.map((item: any) => item.name).filter(Boolean);
+  }
+  // select→multi_select移行時のフォールバック
+  const selectName = prop?.select?.name;
+  return selectName ? [selectName] : [];
 }
 
 function getDate(props: PageProperties, name: string): string | null {
