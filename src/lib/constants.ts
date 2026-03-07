@@ -18,6 +18,10 @@ export const PROJECTS: Project[] = [
   "平日除草",
   "給食試食会",
   "秋イベント",
+  "子ども110番",
+  "書記",
+  "会計",
+  "地区",
   "その他",
 ];
 
@@ -62,6 +66,10 @@ export const PROJECT_ASSIGNEES: Partial<Record<Project, Member[]>> = {
   平日除草:   ["yasuka"],
   給食試食会: ["chikage", "yuki"],
   秋イベント: ["yuki", "chikage"],
+  子ども110番: ["natashia"],
+  書記:       ["chikage"],
+  会計:       ["yuki", "yasuka"],
+  地区:       ["misa", "natashia"],
 };
 
 export const MEMBER_DISPLAY: Record<Member, string> = {

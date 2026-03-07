@@ -12,6 +12,10 @@ export type Project =
   | "平日除草"
   | "給食試食会"
   | "秋イベント"
+  | "子ども110番"
+  | "書記"
+  | "会計"
+  | "地区"
   | "その他";
 
 export type TaskCategory =
@@ -25,7 +29,7 @@ export type TaskCategory =
 export interface Task {
   id: string;
   name: string;
-  assignee: Member;
+  assignee: Member[];
   dueDate: string | null;
   status: TaskStatus;
   project: Project;

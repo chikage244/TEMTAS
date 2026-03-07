@@ -58,7 +58,7 @@ function formatDate(dateStr: string | null): string {
 
 interface TaskFormData {
   name: string;
-  assignee: Member;
+  assignee: Member[];
   dueDate: string;
   status: TaskStatus;
   project: Project;
@@ -68,7 +68,7 @@ interface TaskFormData {
 
 const EMPTY_FORM: TaskFormData = {
   name: "",
-  assignee: "chikage",
+  assignee: [],
   dueDate: "",
   status: "未着手",
   project: "その他",
@@ -219,7 +219,7 @@ export default function TaskList() {
   };
 
   const filteredTasks = tasks.filter((t) => {
-    if (filterMember !== "all" && t.assignee !== filterMember) return false;
+    if (filterMember !== "all" && !t.assignee.includes(filterMember)) return false;
     if (filterProject !== "all" && t.project !== filterProject) return false;
     if (hideCompleted && t.status === "完了") return false;
     return true;
@@ -357,16 +357,19 @@ export default function TaskList() {
                           {task.name}
                         </h4>
                         <div className="flex flex-wrap gap-1.5 mt-2">
-                          <span
-                            className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                            style={
-                              MEMBER_COLORS[task.assignee]
-                                ? { backgroundColor: MEMBER_COLORS[task.assignee].bg, color: MEMBER_COLORS[task.assignee].text }
-                                : { backgroundColor: "#e7e5e4", color: "#78716c" }
-                            }
-                          >
-                            {MEMBER_DISPLAY[task.assignee] || task.assignee}
-                          </span>
+                          {task.assignee.map((member) => (
+                            <span
+                              key={member}
+                              className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                              style={
+                                MEMBER_COLORS[member]
+                                  ? { backgroundColor: MEMBER_COLORS[member].bg, color: MEMBER_COLORS[member].text }
+                                  : { backgroundColor: "#e7e5e4", color: "#78716c" }
+                              }
+                            >
+                              {MEMBER_DISPLAY[member] || member}
+                            </span>
+                          ))}
                           {task.project && (
                             <span className="text-[10px] bg-[#f5ede0] text-[#8b7355] px-2 py-0.5 rounded-full">
                               {task.project}
@@ -433,19 +436,39 @@ export default function TaskList() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">担当者</label>
-                  <select
-                    value={formData.assignee}
-                    onChange={(e) => setFormData({ ...formData, assignee: e.target.value as Member })}
-                    className={selectClass}
-                  >
-                    {MEMBERS.map((m) => (
-                      <option key={m} value={m}>{MEMBER_DISPLAY[m]}</option>
-                    ))}
-                  </select>
+              <div>
+                <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">担当者</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {MEMBERS.map((m) => {
+                    const selected = formData.assignee.includes(m);
+                    const colors = MEMBER_COLORS[m];
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            assignee: selected
+                              ? formData.assignee.filter((a) => a !== m)
+                              : [...formData.assignee, m],
+                          });
+                        }}
+                        className="text-[11px] px-3 py-1 rounded-full font-medium transition-all"
+                        style={
+                          selected
+                            ? { backgroundColor: colors.bg, color: colors.text }
+                            : { backgroundColor: "#f5f5f4", color: "#a8a29e" }
+                        }
+                      >
+                        {MEMBER_DISPLAY[m]}
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">ステータス</label>
                   <select
@@ -477,11 +500,11 @@ export default function TaskList() {
                     value={formData.project}
                     onChange={(e) => {
                       const project = e.target.value as Project;
-                      const autoAssignee = PROJECT_ASSIGNEES[project]?.[0];
+                      const autoAssignees = PROJECT_ASSIGNEES[project];
                       setFormData({
                         ...formData,
                         project,
-                        ...(autoAssignee ? { assignee: autoAssignee } : {}),
+                        ...(autoAssignees ? { assignee: autoAssignees } : {}),
                       });
                     }}
                     className={selectClass}
