@@ -11,6 +11,7 @@ import {
   STATUS_NEXT,
   MEMBER_COLORS,
   MEMBER_DISPLAY,
+  PROJECT_ASSIGNEES,
 } from "@/lib/constants";
 import EmailTemplateModal from "./EmailTemplateModal";
 
@@ -357,10 +358,12 @@ export default function TaskList() {
                         </h4>
                         <div className="flex flex-wrap gap-1.5 mt-2">
                           <span
-                            className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                              MEMBER_COLORS[task.assignee] ||
-                              "bg-stone-50 text-stone-500"
-                            }`}
+                            className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                            style={
+                              MEMBER_COLORS[task.assignee]
+                                ? { backgroundColor: MEMBER_COLORS[task.assignee].bg, color: MEMBER_COLORS[task.assignee].text }
+                                : { backgroundColor: "#e7e5e4", color: "#78716c" }
+                            }
                           >
                             {MEMBER_DISPLAY[task.assignee] || task.assignee}
                           </span>
@@ -472,7 +475,15 @@ export default function TaskList() {
                   <label className="text-[11px] font-bold text-[#8b7355] mb-1 block">プロジェクト</label>
                   <select
                     value={formData.project}
-                    onChange={(e) => setFormData({ ...formData, project: e.target.value as Project })}
+                    onChange={(e) => {
+                      const project = e.target.value as Project;
+                      const autoAssignee = PROJECT_ASSIGNEES[project]?.[0];
+                      setFormData({
+                        ...formData,
+                        project,
+                        ...(autoAssignee ? { assignee: autoAssignee } : {}),
+                      });
+                    }}
                     className={selectClass}
                   >
                     {PROJECTS.map((p) => (
